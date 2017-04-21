@@ -1,0 +1,189 @@
+Index: WorkspaceConsoleApplication.cs
+===================================================================
+--- WorkspaceConsoleApplication.cs	(revision 128703)
++++ WorkspaceConsoleApplication.cs	(working copy)
+@@ -3869,12 +3869,19 @@
+ 		}
+ 
+ 		private void InstallStorage(PackageDBStorage dbStorage, IPackageContentProvider contentProvider,
+-				WorspaceConsoleInstallOptions options) {
++				WorspaceConsoleInstallOptions options, bool usePackageNameFilter = false) {
+ 			PackageInstallUtilities installUtilities = dbStorage.InstallUtilities;
+ 			AddInstallEventHandlers(installUtilities);
+ 			dbStorage.BeforeUpdateDBStructure += OnBeforeUpdateDBStructure;
+ 			try {
+ 				dbStorage.PackageInstallOptions = GetPackageInstallOptions(options);
++				if (usePackageNameFilter && options.PackageName.IsNotNullOrWhiteSpace()) {
++					foreach (Package package in dbStorage.Packages) {
++						package.State = package.Name.Equals(options.PackageName, StringComparison.OrdinalIgnoreCase)
++							? package.State
++							: PackageStorageObjectState.NotChanged;
++					}
++				}
+ 				dbStorage.Save(contentProvider);
+ 			} finally {
+ 				RemoveInstallEventHandlers(installUtilities);
+@@ -4219,13 +4226,14 @@
+ 
+ 		private int InstallPackagesFromWorkingCopy(string workingCopyPath) {
+ 			WorkspaceConsoleOptions workspaceConsoleOptions = CommandLine.GetWorkspaceConsoleOptions();
++			var dbConf = AppConnection.AppSettings.DBConfigurationSectionGroup as DBConfigurationSectionGroup;
++			var csName = dbConf.GeneralSection.ConnectionStringName;
++			var cs = AppConnection.AppSettings.RootConfiguration.ConnectionStrings.ConnectionStrings[csName];
++			WriteInfoMessage(InfoColor, "Db: {0}", cs.ConnectionString);
+ 			UpdateAndCheckConfigurationVersion(workspaceConsoleOptions);
+ 			PackageDBStorage dbStorage = CreateDBStorage(Workspace.Id);
+-			if (InstallOptions.InstallSystemSchemaDBStructure) {
+-				InstallSystemSchemaDBStructure(dbStorage);
+-			}
+-			string packagesWorkingCopyPath = CreatePackagesWorkingCopyPath(workingCopyPath);
+-			RenamePackageSchemaDataFiles(packagesWorkingCopyPath, CommandLine.CultureName);
++			InstallSystemSchemaDBStructure(dbStorage);
++			string packagesWorkingCopyPath = CreateSubstitute(workingCopyPath);
+ 			var fileStorage = new PackageFileStorage(packagesWorkingCopyPath);
+ 			fileStorage.Load();
+ 			if (InstallOptions.Validate && !ValidatePackageStorage(fileStorage, new PackageValidationOptions())) {
+@@ -4234,16 +4242,136 @@
+ 			if (InstallOptions.ValidateSchemaDataColumnParameters && !ValidateSchemaDataColumnParameters(fileStorage)) {
+ 				return -1;
+ 			}
+-			ComposeAndInstallStorage(fileStorage, dbStorage, packagesWorkingCopyPath);
+-			if (InstallOptions.IncludeDependencySources && GetIsClientUnitSchemasHasChanges(dbStorage)) {
+-				WriteInfoMessage(ConsoleColor.Gray, GetResource("RegenerateIncludeDependencySourcesStarted"));
+-				var clientUnitUtilities = new ClientUnitUtilities(AppConnection);
+-				clientUnitUtilities.RegenerateIncludeDependencySources(true);
+-				WriteInfoMessage(ConsoleColor.Gray, GetResource("RegenerateIncludeDependencySourcesFinished"));
+-			}
++			UpdateWC(packagesWorkingCopyPath, fileStorage, dbStorage);
++			DeleteSubstitute(packagesWorkingCopyPath);
+ 			return 0;
+ 		}
+ 
++		private string CreateSubstitute(string path) {
++			path = NormalizePath(path);
++			WriteInfoMessage(InfoColor, "Creating substitute V: for {0}", path);
++			var result = InvokeProgram("subst", "V:", "\"" + path + "\"");
++			Console.WriteLine(result);
++			if (Directory.Exists("V:")) {
++				return "V:";
++			}
++			return path;
++		}
++
++		private static string NormalizePath(string path) {
++			path = Path.GetFullPath(path.Trim());
++			if (path.EndsWith("\\")) {
++				path = path.Substring(0, path.Length - 1);
++			}
++			return path;
++		}
++
++		private void DeleteSubstitute(string path) {
++			path = NormalizePath(path);
++			var result = InvokeProgram("subst", "/D", "\"" + path + "\"");
++			Console.WriteLine(result);
++			WriteInfoMessage(InfoColor, "Substitute V: deleted");
++		}
++
++		private string InvokeProgram(string programName, params string[] arguments) {
++			var info = new ProcessStartInfo("cmd.exe") {
++				Arguments = $"/C {programName} " + string.Join(" ", arguments),
++				WorkingDirectory = Environment.CurrentDirectory,
++				RedirectStandardOutput = true,
++				RedirectStandardInput = true,
++				CreateNoWindow = true,
++				UseShellExecute = false
++			};
++			System.Diagnostics.Process process = System.Diagnostics.Process.Start(info);
++			process.WaitForExit();
++			string result = process.StandardOutput.ReadToEnd();
++			return result;
++		}
++
++		private void UpdateWC(string workingCopyPath, PackageFileStorage fileStorage, PackageDBStorage dbStorage) {
++			InstallOptions.InstallPackageData = true;
++			InstallOptions.InstallSchemaDBStructure = true;
++			InstallOptions.InstallSqlScripts = true;
++			bool singlePackage = InstallOptions.PackageName.IsNotNullOrWhiteSpace();
++			Guid repositoryId = Guid.Empty;
++			if (!singlePackage) {
++				repositoryId = UpdateRepositoryId();
++			}
++			WriteInfoMessage(ConsoleColor.Gray, new LocalizableString(ResourceManagerName, "StartMessage.Compose"),
++				workingCopyPath, Workspace.Name);
++			PackageStorageComposer.Compose(fileStorage, dbStorage, true);
++			InstallStorage(dbStorage, fileStorage.GetPackageContentProvider(), InstallOptions, true);
++			WorkspaceUtilities.SetPackageInstallType(SystemUserConnection, Workspace.Id, dbStorage.Packages,
++				SysPackageInstallType.SourceControl);
++			SavePackagesRevision(workingCopyPath, dbStorage, repositoryId);
++		}
++
++		private void SavePackagesRevision(string workingCopyPath, PackageDBStorage dbStorage, Guid repositoryId) {
++			if (repositoryId.IsEmpty()) {
++				return;
++			}
++			foreach (Package package in dbStorage.Packages) {
++				if (package.State == PackageStorageObjectState.NotChanged) {
++					continue;
++				}
++				var currentRevision = GetCurrentPackageRevision(package, workingCopyPath);
++				if ((currentRevision > 0) && (package.RepositoryRevisionNumber != currentRevision
++											|| package.RepositoryRevisionNumber == 0)) {
++					package.RepositoryRevisionNumber = currentRevision;
++					package.State = PackageStorageObjectState.Changed;
++					package.IsPackageDescriptorChanged = true;
++					package.RepositoryId = repositoryId;
++					dbStorage.SavePackageDescriptor(package);
++				}
++			}
++		}
++
++		private Guid UpdateRepositoryId() {
++			var packageStorePath = "http://tscore-svn:8050/svn/ts5conf/PackageStore";
++			var repo =
++				SystemUserConnection.SystemEntitySchemaManager.GetInstanceByName("SysRepository")
++					.CreateEntity(SystemUserConnection);
++			if (!repo.FetchFromDB("Address", packageStorePath)) {
++				WriteInfoMessage("PackageStore not found, creating...");
++				repo.SetDefColumnValues();
++				repo.PrimaryDisplayColumnValue = "PackageStore";
++				repo.SetColumnValue("Address", packageStorePath);
++				repo.Save(false);
++			}
++			Guid repositoryId = repo.PrimaryColumnValue;
++			Query setPackagesRepository = new Update(SystemUserConnection, "SysPackage")
++				.Set("SysRepositoryId", Column.Parameter(repositoryId))
++				.Where("SysRepositoryId")
++				.IsNull()
++				.And("Maintainer")
++				.IsEqual(Column.Parameter("Terrasoft"));
++			int updatedPackages = setPackagesRepository.Execute();
++			if (updatedPackages > 0) {
++				WriteInfoMessage(InfoColor, "PackageStore is set as repository for {0} packages.",
++					updatedPackages);
++			}
++			return repositoryId;
++		}
++
++		private int GetCurrentPackageRevision(Package package, string wcPath) {
++			if (!wcPath.EndsWith("\\")) {
++				wcPath = wcPath + Path.DirectorySeparatorChar;
++			}
++			var packagePath = Path.Combine(wcPath, package.Name);
++			int result = -1;
++			if (!Directory.Exists(packagePath)) {
++				return result;
++			}
++			var info = InvokeProgram("svn", "info", "\""+packagePath+ "\"");
++			var revisionRegex = new Regex("Revision: (\\d*)");
++			var match = revisionRegex.Match(info);
++			if (match.Success){
++				var revStr = match.Groups[1].Value;
++				int.TryParse(revStr, out result);
++			}
++			return result;
++		}
++
+ 		private bool GetIsClientUnitSchemasHasChanges(PackageStorage storage) {
+ 			IEnumerable<Package> changedPackages = storage.Packages.Where(package =>
+ 				package.State != PackageStorageObjectState.NotChanged);
