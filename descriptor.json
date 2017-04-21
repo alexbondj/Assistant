@@ -1,0 +1,16 @@
+﻿{
+  "Descriptor": {
+    "UId": "e77c8aa1-b8fd-480d-a020-388ec7107232",
+    "PackageVersion": "7.8.0",
+    "Name": "Assistant",
+    "ModifiedOnUtc": "\/Date(1418832796000)\/",
+    "Maintainer": "Terrasoft",
+    "DependsOn": [
+      {
+        "UId": "5be3998b-c5c3-42bb-a01c-2e4149059a97",
+        "PackageVersion": "7.8.0",
+        "Name": "Base"
+      }
+    ]
+  }
+}
