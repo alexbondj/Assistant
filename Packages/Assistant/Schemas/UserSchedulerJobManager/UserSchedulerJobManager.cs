@@ -1,10 +1,11 @@
-
 namespace Terrasoft.Configuration.Assistant
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Data;
 	using Terrasoft.Common;
 	using Terrasoft.Core;
+	using Terrasoft.Core.DB;
 
 	#region Class: UserSchedulerJobManager
 
@@ -78,8 +79,25 @@ namespace Terrasoft.Configuration.Assistant
 
 		#region Methods: Protected
 
+		protected Select GetTasksSelect(Guid userId) {
+			var select = new Select(UserConnection)
+				.Column("Name").As("JobName")
+				.From("AssistantTask")
+				.Where("SysAdminUnitId")
+				.IsEqual(Column.Parameter(userId)) as Select;
+			return select;
+		}
+
 		protected string[] GetKeys() {
 			var keys = new List<string>();
+			var select = GetTasksSelect(UserConnection.CurrentUser.Id);
+			using (DBExecutor dbExecutor = UserConnection.EnsureDBConnection()) {
+				using (IDataReader reader = dbExecutor.ExecuteReader(select.GetSqlText(), select.Parameters)) {
+					while (reader.Read()) {
+						keys.Add(reader.GetColumnValue<string>("JobName"));
+					}
+				}
+			}
 			return keys.ToArray();
 		}
 
