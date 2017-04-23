@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Resources Culture="ru-RU">
+	<Group Type="String">
+		<Items>
+			<Item Name="Caption" Value="Задания помошника" />
+			<Item Name="Columns.Action.Caption" Value="Действие" />
+			<Item Name="Columns.Name.Caption" Value="Название" />
+			<Item Name="Columns.SysAdminUnit.Caption" Value="Пользователь" />
+		</Items>
+	</Group>
+</Resources>

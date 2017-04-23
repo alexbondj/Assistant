@@ -1,5 +1,4 @@
 
-
 namespace Terrasoft.Configuration.Assistant
 {
 	using System;
@@ -81,7 +80,6 @@ namespace Terrasoft.Configuration.Assistant
 
 		protected string[] GetKeys() {
 			var keys = new List<string>();
-			keys.Add("Terrasoft.Configuration.NotificationsJob");
 			return keys.ToArray();
 		}
 

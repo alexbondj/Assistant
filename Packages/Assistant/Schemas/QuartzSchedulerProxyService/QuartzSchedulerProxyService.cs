@@ -24,6 +24,15 @@ namespace Terrasoft.Configuration.Assistant
 			return jManager.GetJobInfos();
 		}
 
+		[OperationContract]
+		[WebInvoke(Method = "POST", BodyStyle = WebMessageBodyStyle.Wrapped,
+			RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json)]
+		public void RunJob() {
+			var userConnection = (UserConnection)HttpContext.Current.Session["UserConnection"];
+			throw new NotImplementedException();
+			return;
+		}
+
 		#endregion
 	}
 }
