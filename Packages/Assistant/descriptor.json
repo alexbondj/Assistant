@@ -3,9 +3,14 @@
     "UId": "e77c8aa1-b8fd-480d-a020-388ec7107232",
     "PackageVersion": "7.8.0",
     "Name": "Assistant",
-    "ModifiedOnUtc": "\/Date(1418832796000)\/",
-    "Maintainer": "Terrasoft",
+    "ModifiedOnUtc": "\/Date(1492981303000)\/",
+    "Maintainer": "F4",
     "DependsOn": [
+      {
+        "UId": "6f46362b-0d60-47d7-b211-fc5e4117aecb",
+        "PackageVersion": "7.8.0",
+        "Name": "ProcessDesigner"
+      },
       {
         "UId": "5be3998b-c5c3-42bb-a01c-2e4149059a97",
         "PackageVersion": "7.8.0",
