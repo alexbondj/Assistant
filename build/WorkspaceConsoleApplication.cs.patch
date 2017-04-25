@@ -1,29 +1,23 @@
 Index: WorkspaceConsoleApplication.cs
 ===================================================================
---- WorkspaceConsoleApplication.cs	(revision 128703)
+--- WorkspaceConsoleApplication.cs	(revision 129401)
 +++ WorkspaceConsoleApplication.cs	(working copy)
-@@ -3869,12 +3869,19 @@
- 		}
- 
- 		private void InstallStorage(PackageDBStorage dbStorage, IPackageContentProvider contentProvider,
--				WorspaceConsoleInstallOptions options) {
-+				WorspaceConsoleInstallOptions options, bool usePackageNameFilter = false) {
- 			PackageInstallUtilities installUtilities = dbStorage.InstallUtilities;
- 			AddInstallEventHandlers(installUtilities);
+@@ -3875,6 +3875,14 @@
  			dbStorage.BeforeUpdateDBStructure += OnBeforeUpdateDBStructure;
  			try {
  				dbStorage.PackageInstallOptions = GetPackageInstallOptions(options);
-+				if (usePackageNameFilter && options.PackageName.IsNotNullOrWhiteSpace()) {
-+					foreach (Package package in dbStorage.Packages) {
-+						package.State = package.Name.Equals(options.PackageName, StringComparison.OrdinalIgnoreCase)
-+							? package.State
-+							: PackageStorageObjectState.NotChanged;
++				var factory = new EditablePackageDeterminerFactory(SystemUserConnection);
++				IEditablePackageDeterminer determiner = factory.GetDeterminer();
++				foreach (Package package in dbStorage.Packages) {
++					if (package.State != PackageStorageObjectState.NotChanged && 
++							!determiner.GetIsPackageEditable(package)) {
++						package.State = PackageStorageObjectState.NotChanged;
 +					}
 +				}
  				dbStorage.Save(contentProvider);
  			} finally {
  				RemoveInstallEventHandlers(installUtilities);
-@@ -4219,13 +4226,14 @@
+@@ -4219,13 +4227,14 @@
  
  		private int InstallPackagesFromWorkingCopy(string workingCopyPath) {
  			WorkspaceConsoleOptions workspaceConsoleOptions = CommandLine.GetWorkspaceConsoleOptions();
@@ -43,7 +37,7 @@ Index: WorkspaceConsoleApplication.cs
  			var fileStorage = new PackageFileStorage(packagesWorkingCopyPath);
  			fileStorage.Load();
  			if (InstallOptions.Validate && !ValidatePackageStorage(fileStorage, new PackageValidationOptions())) {
-@@ -4234,16 +4242,136 @@
+@@ -4234,16 +4243,83 @@
  			if (InstallOptions.ValidateSchemaDataColumnParameters && !ValidateSchemaDataColumnParameters(fileStorage)) {
  				return -1;
  			}
@@ -104,65 +98,12 @@ Index: WorkspaceConsoleApplication.cs
 +			InstallOptions.InstallPackageData = true;
 +			InstallOptions.InstallSchemaDBStructure = true;
 +			InstallOptions.InstallSqlScripts = true;
-+			bool singlePackage = InstallOptions.PackageName.IsNotNullOrWhiteSpace();
-+			Guid repositoryId = Guid.Empty;
-+			if (!singlePackage) {
-+				repositoryId = UpdateRepositoryId();
-+			}
 +			WriteInfoMessage(ConsoleColor.Gray, new LocalizableString(ResourceManagerName, "StartMessage.Compose"),
 +				workingCopyPath, Workspace.Name);
 +			PackageStorageComposer.Compose(fileStorage, dbStorage, true);
-+			InstallStorage(dbStorage, fileStorage.GetPackageContentProvider(), InstallOptions, true);
-+			WorkspaceUtilities.SetPackageInstallType(SystemUserConnection, Workspace.Id, dbStorage.Packages,
++			InstallStorage(dbStorage, fileStorage.GetPackageContentProvider(), InstallOptions);
++			WorkspaceUtilities.SetPackageInstallType(SystemUserConnection, Workspace.Id, fileStorage.Packages,
 +				SysPackageInstallType.SourceControl);
-+			SavePackagesRevision(workingCopyPath, dbStorage, repositoryId);
-+		}
-+
-+		private void SavePackagesRevision(string workingCopyPath, PackageDBStorage dbStorage, Guid repositoryId) {
-+			if (repositoryId.IsEmpty()) {
-+				return;
-+			}
-+			foreach (Package package in dbStorage.Packages) {
-+				if (package.State == PackageStorageObjectState.NotChanged) {
-+					continue;
-+				}
-+				var currentRevision = GetCurrentPackageRevision(package, workingCopyPath);
-+				if ((currentRevision > 0) && (package.RepositoryRevisionNumber != currentRevision
-+											|| package.RepositoryRevisionNumber == 0)) {
-+					package.RepositoryRevisionNumber = currentRevision;
-+					package.State = PackageStorageObjectState.Changed;
-+					package.IsPackageDescriptorChanged = true;
-+					package.RepositoryId = repositoryId;
-+					dbStorage.SavePackageDescriptor(package);
-+				}
-+			}
-+		}
-+
-+		private Guid UpdateRepositoryId() {
-+			var packageStorePath = "http://tscore-svn:8050/svn/ts5conf/PackageStore";
-+			var repo =
-+				SystemUserConnection.SystemEntitySchemaManager.GetInstanceByName("SysRepository")
-+					.CreateEntity(SystemUserConnection);
-+			if (!repo.FetchFromDB("Address", packageStorePath)) {
-+				WriteInfoMessage("PackageStore not found, creating...");
-+				repo.SetDefColumnValues();
-+				repo.PrimaryDisplayColumnValue = "PackageStore";
-+				repo.SetColumnValue("Address", packageStorePath);
-+				repo.Save(false);
-+			}
-+			Guid repositoryId = repo.PrimaryColumnValue;
-+			Query setPackagesRepository = new Update(SystemUserConnection, "SysPackage")
-+				.Set("SysRepositoryId", Column.Parameter(repositoryId))
-+				.Where("SysRepositoryId")
-+				.IsNull()
-+				.And("Maintainer")
-+				.IsEqual(Column.Parameter("Terrasoft"));
-+			int updatedPackages = setPackagesRepository.Execute();
-+			if (updatedPackages > 0) {
-+				WriteInfoMessage(InfoColor, "PackageStore is set as repository for {0} packages.",
-+					updatedPackages);
-+			}
-+			return repositoryId;
 +		}
 +
 +		private int GetCurrentPackageRevision(Package package, string wcPath) {
