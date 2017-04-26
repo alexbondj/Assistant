@@ -1,15 +1,13 @@
-namespace Terrasoft.Configuration.Assistant
+namespace Terrasoft.Configuration.Lua
 {
+	using System;
 
-	//todo
-	public interface IScriptSession {
-
-		T GetVariable<T>(string name);
-
-		void SetVariable<T>(string name, T value);
-		
-		bool Execute(string script);
-
+	public interface IScriptSession : IDisposable
+	{
+		void AddNamespace(string @namespace);
+		void Execute(string code);
+		T Execute<T>(string code);
+		T Get<T>(string name);
+		void Set<T>(string name, T value);
 	}
-
 }

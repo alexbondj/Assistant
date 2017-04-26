@@ -1,0 +1,22 @@
+= MetaData.Schema.UId "ef78f44a-9b26-46c8-b78e-3640540dd7d0"
+= MetaData.Schema.A2 "AssistantScriptPage"
+= MetaData.Schema.A5 "6ef2fbff-21b4-4bc8-a444-547f233bcd1c"
++ MetaData.Schema.B2 {
+  "UId": "b316d365-942d-492a-97c3-0f0f964f6013",
+  "A2": "SaveButtonCaption",
+  "A3": "ef78f44a-9b26-46c8-b78e-3640540dd7d0",
+  "A4": "ef78f44a-9b26-46c8-b78e-3640540dd7d0",
+  "A5": "6ef2fbff-21b4-4bc8-a444-547f233bcd1c"
+}
++ MetaData.Schema.B2 {
+  "UId": "26fafab9-0343-42b3-80d4-1220d0bebf99",
+  "A2": "ExecuteButtonCaption",
+  "A3": "ef78f44a-9b26-46c8-b78e-3640540dd7d0",
+  "A4": "ef78f44a-9b26-46c8-b78e-3640540dd7d0",
+  "A5": "6ef2fbff-21b4-4bc8-a444-547f233bcd1c"
+}
+~ MetaData.Schema.B2 ["b316d365-942d-492a-97c3-0f0f964f6013","26fafab9-0343-42b3-80d4-1220d0bebf99"]
+= MetaData.Schema.B6 "e77c8aa1-b8fd-480d-a020-388ec7107232"
+= MetaData.Schema.B8 "0.0.0.0"
+= MetaData.Schema.HD1 "81c2ebad-7f20-4e71-b0c6-941b1422ba62"
++ MetaData.Schema.B7 false

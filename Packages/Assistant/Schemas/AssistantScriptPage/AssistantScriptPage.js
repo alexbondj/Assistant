@@ -1,0 +1,79 @@
+define("AssistantScriptPage", ["ExtendedHtmlEditModule"], function() {
+	return {
+		entitySchemaName: "AssistantScript",
+		methods: {
+			/**
+			 * @inheritdoc Terrasoft.BasePageV2#init
+			 * @overridden
+			 */
+			init: function() {
+				this.callParent(arguments);
+			}
+		},
+		diff: /**SCHEMA_DIFF*/[
+			{
+				"operation": "insert",
+				"name": "MainContainer",
+				"values": {
+					"itemType": this.Terrasoft.ViewItemType.CONTAINER,
+					"items": []
+				}
+			},
+			{
+				"operation": "insert",
+				"parentName": "MainContainer",
+				"propertyName": "items",
+				"name": "Save",
+				"values": {
+					"click": {
+						"bindTo": "save"
+					},
+					"itemType": this.Terrasoft.ViewItemType.BUTTON,
+					"style": this.Terrasoft.controls.ButtonEnums.style.GREEN,
+					"caption": {
+						"bindTo": "Resources.Strings.SaveButtonCaption"
+					}
+				}
+			},
+			{
+				"operation": "insert",
+				"parentName": "MainContainer",
+				"propertyName": "items",
+				"name": "Execute",
+				"values": {
+					"click": {
+						"bindTo": "execute"
+					},
+					"itemType": this.Terrasoft.ViewItemType.BUTTON,
+					"style": this.Terrasoft.controls.ButtonEnums.style.BLUE,
+					"caption": {
+						"bindTo": "Resources.Strings.ExecuteButtonCaption"
+					}
+				}
+			},
+			{
+				"operation": "insert",
+				"name": "Name",
+				"values": {
+					"bindTo": "Name"
+				},
+				"parentName": "MainContainer",
+				"propertyName": "items"
+			},
+			{
+				"operation": "insert",
+				"parentName": "MainContainer",
+				"propertyName": "items",
+				"name": "Code",
+				"values": {
+					"contentType": this.Terrasoft.ContentType.LONG_TEXT,
+					"labelConfig": {
+						"visible": false
+					},
+					"value": {"bindTo": "Code"},
+					"height": "500px"
+				}
+			}
+		]/**SCHEMA_DIFF*/
+	};
+});

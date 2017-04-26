@@ -3,7 +3,7 @@
     "UId": "e77c8aa1-b8fd-480d-a020-388ec7107232",
     "PackageVersion": "7.8.0",
     "Name": "Assistant",
-    "ModifiedOnUtc": "\/Date(1492981303000)\/",
+    "ModifiedOnUtc": "\/Date(1492981305000)\/",
     "Maintainer": "F4",
     "DependsOn": [
       {
@@ -12,9 +12,9 @@
         "Name": "ProcessDesigner"
       },
       {
-        "UId": "5be3998b-c5c3-42bb-a01c-2e4149059a97",
+        "UId": "a7d9c356-450c-46d7-bc85-72dca4e280ba",
         "PackageVersion": "7.8.0",
-        "Name": "Base"
+        "Name": "NUI"
       }
     ]
   }
