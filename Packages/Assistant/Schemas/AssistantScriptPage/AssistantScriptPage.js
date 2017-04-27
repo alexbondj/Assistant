@@ -10,6 +10,11 @@ define("AssistantScriptPage", ["ExtendedHtmlEditModule"], function() {
 				this.callParent(arguments);
 			},
 
+			save: function() {
+				this.setDefaultValues();
+				this.callParent(arguments);
+			},
+
 			execute: function() {
 				var config = this.getServiceConfig();
 				this.callService(config, function(response) {
@@ -35,31 +40,7 @@ define("AssistantScriptPage", ["ExtendedHtmlEditModule"], function() {
 		diff: /**SCHEMA_DIFF*/[
 			{
 				"operation": "insert",
-				"name": "MainContainer",
-				"values": {
-					"itemType": this.Terrasoft.ViewItemType.CONTAINER,
-					"items": []
-				}
-			},
-			{
-				"operation": "insert",
-				"parentName": "MainContainer",
-				"propertyName": "items",
-				"name": "Save",
-				"values": {
-					"click": {
-						"bindTo": "save"
-					},
-					"itemType": this.Terrasoft.ViewItemType.BUTTON,
-					"style": this.Terrasoft.controls.ButtonEnums.style.GREEN,
-					"caption": {
-						"bindTo": "Resources.Strings.SaveButtonCaption"
-					}
-				}
-			},
-			{
-				"operation": "insert",
-				"parentName": "MainContainer",
+				"parentName": "HeaderContainer",
 				"propertyName": "items",
 				"name": "Execute",
 				"values": {
@@ -67,7 +48,7 @@ define("AssistantScriptPage", ["ExtendedHtmlEditModule"], function() {
 						"bindTo": "execute"
 					},
 					"itemType": this.Terrasoft.ViewItemType.BUTTON,
-					"style": this.Terrasoft.controls.ButtonEnums.style.BLUE,
+					"style": this.Terrasoft.controls.ButtonEnums.style.DEFAULT,
 					"caption": {
 						"bindTo": "Resources.Strings.ExecuteButtonCaption"
 					}
@@ -77,14 +58,14 @@ define("AssistantScriptPage", ["ExtendedHtmlEditModule"], function() {
 				"operation": "insert",
 				"name": "Name",
 				"values": {
-					"bindTo": "Name"
+					"bindTo": "Name",
 				},
-				"parentName": "MainContainer",
+				"parentName": "HeaderContainer",
 				"propertyName": "items"
 			},
 			{
 				"operation": "insert",
-				"parentName": "MainContainer",
+				"parentName": "HeaderContainer",
 				"propertyName": "items",
 				"name": "Code",
 				"values": {
