@@ -8,6 +8,9 @@ define("AssistantSchema", ["AssistantSchemaResources"],
             attributes: {
                 "ActionCollection": {
                     dataValueType: this.Terrasoft.DataValueType.COLLECTION
+                },
+                "ActionTabActionsMenuCollection": {
+                    "dataValueType": this.Terrasoft.DataValueType.COLLECTION
                 }
             },
             methods: {
@@ -24,7 +27,7 @@ define("AssistantSchema", ["AssistantSchemaResources"],
                     this.initParameters();
                     this.callParent([function() {
                         Terrasoft.chain(
-                            //this.initEmailTabActionsMenuCollection,
+                            this.initActionTabActionsMenuCollection,
                             //this.initEmailProcessTag,
                             function() {
                                 this.loadData();
@@ -32,6 +35,50 @@ define("AssistantSchema", ["AssistantSchemaResources"],
                             }, this);
                     }, this]);
                 },
+
+                initActionTabActionsMenuCollection: function(callback, scope) {
+                    var collection = this.get("ActionTabActionsMenuCollection") ||
+                        this.Ext.create("Terrasoft.BaseViewModelCollection");
+                    var refreshCaption = this.get("Resources.Strings.RefreshCaption");
+                    var refreshItem = this.getButtonMenuItem({
+                        "Caption": refreshCaption,
+                        "Click": {bindTo: "onRefreshData"}
+                    });
+                    collection.addItem(refreshItem);
+                    var executeLuaScriptCaption = this.get("Resources.Strings.ExecuteLuaScriptCaption");
+                    var executeLuaScriptItem = this.getButtonMenuItem({
+                        "Caption": executeLuaScriptCaption,
+                        "Click": {bindTo: "showRunScriptWindow"},
+                        "canExecute": {"bindTo": "canRunScript"},
+                        "Visible": {bindTo: "isRunScriptItemVisible"}
+                    });
+                    collection.addItem(executeLuaScriptItem);
+                    this.set("ActionTabActionsMenuCollection", collection);
+                    if (!this.Ext.isEmpty(callback)) {
+                        callback.call(scope || this);
+                    }
+                },
+
+                ///**
+                // * Add email account action handler.
+                // */
+                //onAddEmailAccount: function() {
+                //    var modalBoxSize = {
+                //        minHeight: "1",
+                //        minWidth: "1",
+                //        maxHeight: "100",
+                //        maxWidth: "100"
+                //    };
+                //    var modalBoxContainer = ModalBox.show(modalBoxSize);
+                //    this.sandbox.loadModule("CredentialsSyncSettingsEdit", {
+                //        renderTo: modalBoxContainer,
+                //        instanceConfig: {
+                //            schemaName: "BaseSyncSettingsEdit",
+                //            isSchemaConfigInitialized: true,
+                //            useHistoryState: false
+                //        }
+                //    });
+                //},
 
                 initParameters: function() {
                     this.set("ActionCollection", this.Ext.create("Terrasoft.BaseViewModelCollection"));
@@ -52,7 +99,7 @@ define("AssistantSchema", ["AssistantSchemaResources"],
                     this.callService(config, this.onActionLoaded, this);
                 },
 
-                reload: function() {
+                onRefreshData: function() {
                     this.loadData();
                 },
 
@@ -85,7 +132,7 @@ define("AssistantSchema", ["AssistantSchemaResources"],
                     "name": "AssistantMainContainer",
                     "values": {
                         "id": "AssistantMainContainer",
-                        "selectors": {"wrapEl": "#assistantMainContainer"},
+                        "selectors": {"wrapEl": "#AssistantMainContainer"},
                         "itemType": Terrasoft.ViewItemType.CONTAINER,
                         "wrapClass": ["assistantMainContainer"],
                         "items": []
@@ -139,19 +186,6 @@ define("AssistantSchema", ["AssistantSchemaResources"],
                 },
                 {
                     "operation": "insert",
-                    "name": "Reload",
-                    "propertyName": "items",
-                    "parentName": "AssistantTabHeader",
-                    "values": {
-                        "itemType": Terrasoft.ViewItemType.BUTTON,
-                        "imageConfig": {"bindTo": "Resources.Images.ReloadImage"},
-                        "style": Terrasoft.controls.ButtonEnums.style.TRANSPARENT,
-                        "click": {"bindTo": "reload"}//,
-                        //"classes": {wrapClassName: ["add-email-button-wrap"]}
-                    }
-                },
-                {
-                    "operation": "insert",
                     "name": "ActionTabActions",
                     "propertyName": "items",
                     "parentName": "AssistantTabHeader",
@@ -173,7 +207,8 @@ define("AssistantSchema", ["AssistantSchemaResources"],
                         "markerValue": "EmailTabActions",
                         "tips": []
                     }
-                },
+                }
+                ,
                 //{
                 //    "operation": "insert",
                 //    "parentName": "EmailTabActions",

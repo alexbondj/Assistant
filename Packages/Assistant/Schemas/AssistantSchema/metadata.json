@@ -6,7 +6,15 @@
       "A2": "AssistantSchema",
       "A5": "de53acb2-bad8-47a3-a89b-b76a99219c79",
       "B1": [],
-      "B2": [],
+      "B2": [
+        {
+          "UId": "e6f1a510-3728-4b9d-a5e3-ad6a1e9e192c",
+          "A2": "RefreshCaption",
+          "A3": "adcf4801-a882-42c1-8b76-78fc50736540",
+          "A4": "adcf4801-a882-42c1-8b76-78fc50736540",
+          "A5": "de53acb2-bad8-47a3-a89b-b76a99219c79"
+        }
+      ],
       "B3": [],
       "B6": "e77c8aa1-b8fd-480d-a020-388ec7107232",
       "B8": "0.0.0.0",
@@ -25,6 +33,12 @@
         {
           "UId": "9760594d-ed6b-4283-8ab5-2f38a0bcc5b4",
           "A2": "AddActionImage",
+          "A3": "adcf4801-a882-42c1-8b76-78fc50736540",
+          "A4": "adcf4801-a882-42c1-8b76-78fc50736540"
+        },
+        {
+          "UId": "57bdae1b-23f6-42cf-bc65-d0768c80d4de",
+          "A2": "ActionsButtonImage",
           "A3": "adcf4801-a882-42c1-8b76-78fc50736540",
           "A4": "adcf4801-a882-42c1-8b76-78fc50736540"
         }
