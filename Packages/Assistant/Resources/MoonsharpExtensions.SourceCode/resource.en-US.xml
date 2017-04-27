@@ -2,7 +2,7 @@
 <Resources Culture="en-US">
 	<Group Type="String">
 		<Items>
-			<Item Name="Caption" Value="IScriptSession" />
+			<Item Name="Caption" Value="MoonsharpExtensions" />
 		</Items>
 	</Group>
 </Resources>
