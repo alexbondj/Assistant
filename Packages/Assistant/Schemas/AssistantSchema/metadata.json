@@ -15,7 +15,20 @@
       "HD6": "define('{0}Structure', ['{0}Resources'], function(resources) {{return {{schemaUId:'{2}',schemaName:'{3}',parentSchemaUId:'{4}',extendParent:{5},type:Terrasoft.SchemaType.EDIT_VIEW_MODEL_SCHEMA,entitySchema:'',name:'',extend:'Terrasoft.model.BaseViewModel',schema:{{leftPanel:[],rightPanel:[],actions:[],analytics:[]}},methods:{{}},controlsConfig:{{}},customBindings:{{}},bindings:{{}},schemaDifferences:function(){{\n{1}\n}}}};}});",
       "HD5": [],
       "HD7": [],
-      "HD8": [],
+      "HD8": [
+        {
+          "UId": "6dc0b8dc-0d0b-410d-869f-356471a8403e",
+          "A2": "ReloadImage",
+          "A3": "adcf4801-a882-42c1-8b76-78fc50736540",
+          "A4": "adcf4801-a882-42c1-8b76-78fc50736540"
+        },
+        {
+          "UId": "9760594d-ed6b-4283-8ab5-2f38a0bcc5b4",
+          "A2": "AddActionImage",
+          "A3": "adcf4801-a882-42c1-8b76-78fc50736540",
+          "A4": "adcf4801-a882-42c1-8b76-78fc50736540"
+        }
+      ],
       "HD11": []
     }
   }

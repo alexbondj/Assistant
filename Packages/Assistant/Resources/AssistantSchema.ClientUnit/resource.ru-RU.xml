@@ -3,6 +3,8 @@
 	<Group Type="String">
 		<Items>
 			<Item Name="Caption" Value="AssistantSchema" />
+			<Item Name="Images.6dc0b8dc-0d0b-410d-869f-356471a8403e.Caption" Value="Изображение 1" />
+			<Item Name="Images.9760594d-ed6b-4283-8ab5-2f38a0bcc5b4.Caption" Value="Изображение 1" />
 		</Items>
 	</Group>
 </Resources>
