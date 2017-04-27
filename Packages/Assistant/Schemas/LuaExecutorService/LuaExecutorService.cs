@@ -3,6 +3,7 @@ namespace Terrasoft.Configuration
 	using System;
 	using System.ServiceModel;
 	using System.ServiceModel.Activation;
+	using System.ServiceModel.Web;
 	using System.Web;
 	using Terrasoft.Configuration.Lua;
 	using Terrasoft.Core;
@@ -33,6 +34,9 @@ namespace Terrasoft.Configuration
 		/// </summary>
 		/// <param name="code">Code.</param>
 		/// <returns>Service response.</returns>
+		[OperationContract]
+		[WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Wrapped,
+			ResponseFormat = WebMessageFormat.Json)]
 		public ConfigurationServiceResponse Execute(string code) {
 			var response = new ConfigurationServiceResponse();
 			var script = new LuaScript();

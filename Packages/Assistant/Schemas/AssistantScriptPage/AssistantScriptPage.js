@@ -8,6 +8,28 @@ define("AssistantScriptPage", ["ExtendedHtmlEditModule"], function() {
 			 */
 			init: function() {
 				this.callParent(arguments);
+			},
+
+			execute: function() {
+				var config = this.getServiceConfig();
+				this.callService(config, function(response) {
+					var result = response.ExecuteResult;
+					var message = result.success
+						? "Done."
+						: result.errorInfo.message;
+					this.showInformationDialog(message, this.Terrasoft.emptyFn);
+				});
+			},
+
+			getServiceConfig: function() {
+				return {
+					serviceName: "LuaExecutorService",
+					methodName: "Execute",
+					scope: this,
+					data: {
+						code: this.get("Code")
+					}
+				};
 			}
 		},
 		diff: /**SCHEMA_DIFF*/[
