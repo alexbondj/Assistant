@@ -6,11 +6,87 @@ namespace Terrasoft.Configuration.Assistant
 	using Terrasoft.Common;
 	using Terrasoft.Core;
 	using Terrasoft.Core.DB;
+	using Terrasoft.Core.Scheduler;
+	using Quartz;
 
 	#region Class: UserSchedulerJobManager
 
 	public class UserSchedulerJobManager
 	{
+
+		#region Private Class: BaseJobData
+
+		private abstract class BaseJobData
+		{
+			protected BaseJobData(UserConnection userConnection) {
+				WorkspaceName = userConnection.Workspace.Name;
+				UserName = userConnection.CurrentUser.Name;
+			}
+
+			public string JobName { get; set; }
+			public string JobGroup { get; set; }
+			public string WorkspaceName { get; private set; }
+			public string UserName { get; private set; }
+			public int PeriodInMinute { get; set; }
+			public IDictionary<string, object> Parameters { get; set; }
+
+			public abstract void RunMinutely();
+
+			public abstract void RunImmediate();
+
+			public abstract void RunOnEveryDay(DateTime dateTime);
+
+			public virtual bool Remove() {
+				return AppScheduler.RemoveJob(JobName, JobGroup);
+			}
+
+			public virtual void Pause() {
+				AppScheduler.Instance.PauseJob(JobKey.Create(JobName, JobGroup));
+			}
+
+			public virtual void Resume() {
+				AppScheduler.Instance.ResumeJob(JobKey.Create(JobName, JobGroup));
+			}
+		}
+
+		#endregion
+
+		#region Private Class: UserSchedulerJobManager
+
+		private class ProcessJobData : BaseJobData
+		{
+			public ProcessJobData(UserConnection userConnection)
+				: base(userConnection) {
+
+			}
+
+			public string ProcessName { get; set; }
+
+			public override void RunMinutely() {
+				AppScheduler.ScheduleMinutelyProcessJob(JobName, JobGroup, ProcessName,
+					WorkspaceName, UserName, PeriodInMinute, Parameters);
+			}
+
+			public override void RunImmediate() {
+				AppScheduler.ScheduleImmediateProcessJob(JobName, JobGroup, ProcessName,
+					WorkspaceName, UserName, Parameters);
+			}
+
+			public override void RunOnEveryDay(DateTime dateTime) {
+				ITrigger trigger = TriggerBuilder.Create()
+					.WithDailyTimeIntervalSchedule(
+						interval => interval
+							.WithIntervalInHours(24)
+							.OnEveryDay()
+							.StartingDailyAt(TimeOfDay.HourAndMinuteOfDay(dateTime.Hour, dateTime.Minute))
+					).Build();
+				var job = AppScheduler.CreateProcessJob(JobName, JobGroup, ProcessName,
+					WorkspaceName, UserName, Parameters);
+				AppScheduler.Instance.ScheduleJob(job, trigger);
+			}
+		}
+
+		#endregion
 
 		#region Class: UserJobInfo
 		[Serializable]
@@ -75,6 +151,26 @@ namespace Terrasoft.Configuration.Assistant
 				: DateTime.MinValue;
 		}
 
+		private bool DeleteTask(Guid actionId) {
+			var delete = new Delete(UserConnection)
+						.From("AssistantTask")
+						.Where("ActionId").IsEqual(Column.Parameter(actionId))
+						.And("SysAdminUnitId").IsEqual(Column.Parameter(UserConnection.CurrentUser.Id));
+			using (var dbExecutor = UserConnection.EnsureDBConnection()) {
+				delete.Execute(dbExecutor);
+			}
+			return true;
+		}
+
+		private BaseJobData GetActionData(Guid actionId) {
+			var jobData = new ProcessJobData(UserConnection) {
+				ProcessName = "TestProcess",
+				JobName = "TestProcessJobName",
+				JobGroup = "TestProcessGroupName"
+			};
+			return jobData;
+		}
+
 		#endregion
 
 		#region Methods: Protected
@@ -108,6 +204,59 @@ namespace Terrasoft.Configuration.Assistant
 		public IEnumerable<UserJobInfo> GetJobInfos() {
 			var jobsList = InfoProxy.GetJobsInfoByList(GetKeys());
 			return ToUserJobList(jobsList);
+		}
+
+		public bool RunMinutelyAction(Guid actionId) {
+			try {
+				GetActionData(actionId).RunMinutely();
+			} catch {
+				return false;
+			}
+			return true;
+		}
+
+		public bool RunImmediateAction(Guid actionId) {
+			try {
+				GetActionData(actionId).RunImmediate();
+			} catch {
+				return false;
+			}
+			return true;
+		}
+
+		public bool RunOnEveryDay(Guid actionId, DateTime dateTime) {
+			try {
+				GetActionData(actionId).RunOnEveryDay(dateTime);
+			} catch {
+				return false;
+			}
+			return true;
+		}
+
+		public bool RemoveAction(Guid actionId) {
+			try {
+				return GetActionData(actionId).Remove() && DeleteTask(actionId);
+			} catch {
+				return false;
+			}
+		}
+
+		public bool PauseAction(Guid actionId) {
+			try {
+				GetActionData(actionId).Pause();
+			} catch {
+				return false;
+			}
+			return true;
+		}
+
+		public bool ResumeAction(Guid actionId) {
+			try {
+				GetActionData(actionId).Resume();
+			} catch {
+				return false;
+			}
+			return true;
 		}
 
 		#endregion

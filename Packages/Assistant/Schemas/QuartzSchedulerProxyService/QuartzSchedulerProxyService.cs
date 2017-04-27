@@ -27,10 +27,10 @@ namespace Terrasoft.Configuration.Assistant
 		[OperationContract]
 		[WebInvoke(Method = "POST", BodyStyle = WebMessageBodyStyle.Wrapped,
 			RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json)]
-		public void RunJob() {
+		public bool RunOnEveryDayAction(Guid actionId, DateTime dateTime) {
 			var userConnection = (UserConnection)HttpContext.Current.Session["UserConnection"];
-			throw new NotImplementedException();
-			return;
+			var jManager = new UserSchedulerJobManager(userConnection);
+			return jManager.RunOnEveryDay(actionId, dateTime);
 		}
 
 		#endregion
