@@ -1,0 +1,13 @@
+﻿{
+  "Descriptor": {
+    "UId": "ef78f44a-9b26-46c8-b78e-3640540dd7d0",
+    "Name": "AssistantScriptPage",
+    "ModifiedOnUtc": "\/Date(1493287308000)\/",
+    "Parent": {
+      "UId": "d3cc497c-f286-4f13-99c1-751c468733c0",
+      "Name": "BasePageV2"
+    },
+    "ManagerName": "ClientUnitSchemaManager",
+    "Caption": "Assistant scripts edit page"
+  }
+}

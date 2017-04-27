@@ -2,9 +2,9 @@
   "MetaData": {
     "Schema": {
       "ManagerName": "SourceCodeSchemaManager",
-      "UId": "58c055e9-565a-4e7d-8266-49b3b0150d9c",
-      "A2": "IScriptSession",
-      "A5": "b3cf814f-558e-4ab2-8e24-f08dc48a2790",
+      "UId": "01463af4-784b-499f-a662-e4b22e1cdd9a",
+      "A2": "LuaClassFactory",
+      "A5": "6ef2fbff-21b4-4bc8-a444-547f233bcd1c",
       "B1": [],
       "B2": [],
       "B3": [],
