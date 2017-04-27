@@ -132,12 +132,13 @@
         {
           "BL1": "Terrasoft.Core.Process.ProcessSchemaParameter",
           "UId": "85aa16fc-d095-45f0-bafc-7c15ffdda5d0",
-          "A2": "Body",
+          "A2": "Script",
           "A3": "9ce5f3af-245c-4d88-8102-72f2115c8cc8",
           "A4": "9ce5f3af-245c-4d88-8102-72f2115c8cc8",
           "L1": "8b3f29bb-ea14-4ce5-a5c5-293a929b6ba2",
           "L8": {},
-          "L6": true
+          "L6": true,
+          "L15": true
         }
       ],
       "FK11": "dbee2029-ce8e-49f1-87c0-d9143f99846f",

@@ -2,8 +2,7 @@
 <Resources Culture="ru-RU">
 	<Group Type="String">
 		<Items>
-			<Item Name="Caption" Value="Lua script" />
-			<Item Name="Parameters.Script.Caption" Value="Script" />
+			<Item Name="Caption" Value="LuaSourceCodeEdit" />
 		</Items>
 	</Group>
 </Resources>
