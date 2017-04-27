@@ -3,18 +3,28 @@
     "UId": "e77c8aa1-b8fd-480d-a020-388ec7107232",
     "PackageVersion": "7.8.0",
     "Name": "Assistant",
-    "ModifiedOnUtc": "\/Date(1492960121000)\/",
+    "ModifiedOnUtc": "\/Date(1493304784000)\/",
     "Maintainer": "F4",
     "DependsOn": [
+      {
+        "UId": "a7d9c356-450c-46d7-bc85-72dca4e280ba",
+        "PackageVersion": "7.8.0",
+        "Name": "NUI"
+      },
+      {
+        "UId": "613fd913-be03-46ce-909b-f44e4225469e",
+        "PackageVersion": "7.8.0",
+        "Name": "UIv2"
+      },
       {
         "UId": "6f46362b-0d60-47d7-b211-fc5e4117aecb",
         "PackageVersion": "7.8.0",
         "Name": "ProcessDesigner"
       },
       {
-        "UId": "a7d9c356-450c-46d7-bc85-72dca4e280ba",
+        "UId": "5be3998b-c5c3-42bb-a01c-2e4149059a97",
         "PackageVersion": "7.8.0",
-        "Name": "NUI"
+        "Name": "Base"
       }
     ]
   }
