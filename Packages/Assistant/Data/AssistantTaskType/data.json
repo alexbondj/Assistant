@@ -1,0 +1,40 @@
+﻿{
+  "PackageData": [
+    {
+      "Row": [
+        {
+          "SchemaColumnUId": "c6559751-5ed9-46d2-a91f-df972c47ce7c",
+          "Value": "Daily"
+        },
+        {
+          "SchemaColumnUId": "ae0e45ca-c495-4fe7-a39d-3ab7278e1617",
+          "Value": "53a1127d-b0c3-435b-9268-938f6678fdc2"
+        }
+      ]
+    },
+    {
+      "Row": [
+        {
+          "SchemaColumnUId": "c6559751-5ed9-46d2-a91f-df972c47ce7c",
+          "Value": "Immediate"
+        },
+        {
+          "SchemaColumnUId": "ae0e45ca-c495-4fe7-a39d-3ab7278e1617",
+          "Value": "6d04e467-1a1e-4fa0-b3c5-5294c1f3f040"
+        }
+      ]
+    },
+    {
+      "Row": [
+        {
+          "SchemaColumnUId": "c6559751-5ed9-46d2-a91f-df972c47ce7c",
+          "Value": "Minutely"
+        },
+        {
+          "SchemaColumnUId": "ae0e45ca-c495-4fe7-a39d-3ab7278e1617",
+          "Value": "d0320792-ff71-42ae-9b01-8daf2b21c806"
+        }
+      ]
+    }
+  ]
+}

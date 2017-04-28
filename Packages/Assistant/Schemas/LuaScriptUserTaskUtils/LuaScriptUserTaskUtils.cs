@@ -1,5 +1,3 @@
-
-
 using Terrasoft.Common;
 
 namespace Terrasoft.Configuration.Lua {
@@ -73,6 +71,7 @@ namespace Terrasoft.Configuration.Lua {
 			}
 			var model = new ProcessModel(owner);
 			session.Set("Process", model);
+			session.Set("UserConnection", owner.UserConnection);
 			string script = Encoding.UTF8.GetString(Convert.FromBase64String(base64Script));
 			return session.Execute<bool>(script);
 		}
