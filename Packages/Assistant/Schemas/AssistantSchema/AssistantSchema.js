@@ -1,4 +1,4 @@
-define("AssistantSchema", ["RightUtilities", "ModalBox", "AssistantSchemaResources"],
+define("AssistantSchema", ["RightUtilities", "ModalBox", "AssistantSchemaResources", "css!AssistantSchema"],
     function(RightUtilities, ModalBox) {
         return {
             messages: {
@@ -421,8 +421,9 @@ define("AssistantSchema", ["RightUtilities", "ModalBox", "AssistantSchemaResourc
                     "parentName": "AssistantTabHeader",
                     "values": {
                         "itemType": Terrasoft.ViewItemType.BUTTON,
-                        "imageConfig": {"bindTo": "Resources.Images.AddActionImage"},
+                        //"imageConfig": {"bindTo": "Resources.Images.AddActionImage"},
                         "style": Terrasoft.controls.ButtonEnums.style.TRANSPARENT,
+                        "caption": "Add",
                         "classes": {
                             wrapperClass: ["add-task-button-wrap"],
                             menuClass: ["task-actions-button-menu"]
@@ -441,7 +442,8 @@ define("AssistantSchema", ["RightUtilities", "ModalBox", "AssistantSchemaResourc
                     "parentName": "AssistantTabHeader",
                     "values": {
                         "itemType": Terrasoft.ViewItemType.BUTTON,
-                        "imageConfig": {"bindTo": "Resources.Images.ActionsButtonImage"},
+                        //"imageConfig": {"bindTo": "Resources.Images.ActionsButtonImage"},
+                        "caption": "MENU",
                         "style": Terrasoft.controls.ButtonEnums.style.TRANSPARENT,
                         "classes": {
                             wrapperClass: ["task-actions-button-wrapper", "task-tab-actions-button-wrapper"],
