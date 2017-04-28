@@ -1,6 +1,7 @@
 set Major=7
 set Minor=10
 set Build=0
+set Revision=1751
 del /Q /F .\..\..\TSBpm\Src\Lib\*\AssemblyInfo.cs
 call %~dp0\build_core.bat
 call %~dp0\upd_conf.bat

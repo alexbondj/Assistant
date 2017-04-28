@@ -81,11 +81,15 @@ define("LuaScriptTaskPropertiesPage", ["terrasoft", "SourceCodeEdit"],
 						var value = parameter.getValue();
 						value = value ? value.replace(/"/g, "") : value;
 						try	{
-							value = window.atob(value);
+							if (value){
+								value = window.atob(value);
+								this.set("Body", value);
+							} else {
+								this.setBodyDefValue();
+							}
 						} catch (e) {
 							this.error(e);
 						}
-						this.set("Body", value);
 						this.initMessages();
 						callback.call(scope);
 					}, this]);
