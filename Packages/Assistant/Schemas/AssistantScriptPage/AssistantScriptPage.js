@@ -20,7 +20,7 @@ define("AssistantScriptPage", ["ExtendedHtmlEditModule"], function() {
 				this.callService(config, function(response) {
 					var result = response.ExecuteResult;
 					var message = result.success
-						? "Done."
+						? result.Value || "Done."
 						: result.errorInfo.message;
 					this.showInformationDialog(message, this.Terrasoft.emptyFn);
 				});

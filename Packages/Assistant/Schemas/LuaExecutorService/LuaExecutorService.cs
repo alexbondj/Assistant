@@ -1,32 +1,31 @@
 namespace Terrasoft.Configuration
 {
 	using System;
+	using System.Runtime.Serialization;
 	using System.ServiceModel;
 	using System.ServiceModel.Activation;
 	using System.ServiceModel.Web;
-	using System.Web;
 	using Terrasoft.Configuration.Lua;
-	using Terrasoft.Core;
+	using Terrasoft.Web.Common;
 
 	#region Class: LuaExecutorService
 
 	[ServiceContract]
 	[AspNetCompatibilityRequirements(RequirementsMode = AspNetCompatibilityRequirementsMode.Required)]
-	public class LuaExecutorService
+	public class LuaExecutorService : BaseService
 	{
+		[DataContract]
+		public class LuaExecutorServiceResponse : ConfigurationServiceResponse
+		{
+			#region Properties: Public
 
-		private UserConnection _userConnection;
+			/// <summary>
+			/// Script result value.
+			/// </summary>
+			[DataMember(Name = "Value")]
+			public object Value { get; set; }
 
-		private UserConnection UserConnection {
-			get {
-				if (_userConnection != null) {
-					return _userConnection;
-				}
-				if (HttpContext.Current.Session != null) {
-					_userConnection = HttpContext.Current.Session["UserConnection"] as UserConnection;
-				}
-				return _userConnection;
-			}
+			#endregion
 		}
 
 		/// <summary>
@@ -35,14 +34,17 @@ namespace Terrasoft.Configuration
 		/// <param name="code">Code.</param>
 		/// <returns>Service response.</returns>
 		[OperationContract]
-		[WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Wrapped,
+		[WebInvoke(Method = "POST", 
+			BodyStyle = WebMessageBodyStyle.Wrapped,
+			RequestFormat = WebMessageFormat.Json,
 			ResponseFormat = WebMessageFormat.Json)]
-		public ConfigurationServiceResponse Execute(string code) {
-			var response = new ConfigurationServiceResponse();
+		public LuaExecutorServiceResponse Execute(string code) {
+			var response = new LuaExecutorServiceResponse();
 			var script = new LuaScript();
 			script.Set("userConnection", UserConnection);
 			try {
-				script.Execute(code);
+				var returnedValue = script.Execute<object>(code);
+				response.Value = returnedValue;
 			} catch (Exception e) {
 				response.Exception = e;
 			}

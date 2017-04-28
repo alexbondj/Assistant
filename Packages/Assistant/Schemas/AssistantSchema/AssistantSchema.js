@@ -1,13 +1,14 @@
-define("AssistantSchema", ["AssistantSchemaResources"],
-    function() {
+define("AssistantSchema", ["RightUtilities", "ModalBox", "AssistantSchemaResources"],
+    function(RightUtilities, ModalBox) {
         return {
             messages: {
             },
             mixins: {
-             },
+                rightsUtilities: "Terrasoft.RightUtilitiesMixin"
+            },
             attributes: {
                 "ActionCollection": {
-                    dataValueType: this.Terrasoft.DataValueType.COLLECTION
+                    "dataValueType": this.Terrasoft.DataValueType.COLLECTION
                 },
                 "ActionTabActionsMenuCollection": {
                     "dataValueType": this.Terrasoft.DataValueType.COLLECTION
@@ -53,6 +54,7 @@ define("AssistantSchema", ["AssistantSchemaResources"],
                     this.initParameters();
                     this.callParent([function() {
                         Terrasoft.chain(
+                            this.initRights,
                             this.initActionTabActionsMenuCollection,
                             this.initAddItemMenuCollection,
                             this.buildSchema,
@@ -61,6 +63,22 @@ define("AssistantSchema", ["AssistantSchemaResources"],
                                 callback();
                             }, this);
                     }, this]);
+                },
+
+                initRights: function(callback, scope) {
+                    RightUtilities.checkCanExecuteOperation({
+                        operation: "AssistantDevMode"
+                    }, function(result) {
+                        this.setIsDevMode(result);
+                        if (!this.Ext.isEmpty(callback)) {
+                            callback.call(scope || this);
+                        }
+                    }, this);
+                },
+
+                setIsDevMode: function(value) {
+                    this.set("isRunScriptItemVisible", value);
+                    this.set("isDevMode", value);
                 },
 
                 showAddDaily: function() {
@@ -115,9 +133,9 @@ define("AssistantSchema", ["AssistantSchemaResources"],
                     var executeLuaScriptCaption = this.get("Resources.Strings.ExecuteLuaScriptCaption");
                     var executeLuaScriptItem = this.getButtonMenuItem({
                         "Caption": executeLuaScriptCaption,
-                        "Click": {bindTo: "showRunScriptWindow"},
-                        "canExecute": {"bindTo": "canRunScript"},
-                        "Visible": {bindTo: "isRunScriptItemVisible"}
+                        "Click": { "bindTo": "showRunScriptWindow" },
+                        //"canExecute": { "bindTo": "isDevMode" },
+                        "Visible": { "bindTo": "isRunScriptItemVisible" }
                     });
                     collection.addItem(executeLuaScriptItem);
                     this.set("ActionTabActionsMenuCollection", collection);
@@ -126,26 +144,23 @@ define("AssistantSchema", ["AssistantSchemaResources"],
                     }
                 },
 
-                ///**
-                // * Add email account action handler.
-                // */
-                //onAddEmailAccount: function() {
-                //    var modalBoxSize = {
-                //        minHeight: "1",
-                //        minWidth: "1",
-                //        maxHeight: "100",
-                //        maxWidth: "100"
-                //    };
-                //    var modalBoxContainer = ModalBox.show(modalBoxSize);
-                //    this.sandbox.loadModule("CredentialsSyncSettingsEdit", {
-                //        renderTo: modalBoxContainer,
-                //        instanceConfig: {
-                //            schemaName: "BaseSyncSettingsEdit",
-                //            isSchemaConfigInitialized: true,
-                //            useHistoryState: false
-                //        }
-                //    });
-                //},
+                showRunScriptWindow: function() {
+                    var modalBoxSize = {
+                       minHeight: "75",
+                       minWidth: "10",
+                       maxHeight: "300",
+                       maxWidth: "50"
+                   };
+                   var modalBoxContainer = ModalBox.show(modalBoxSize);
+                   this.sandbox.loadModule("CredentialsSyncSettingsEdit", {
+                       renderTo: modalBoxContainer,
+                       instanceConfig: {
+                           schemaName: "LuaScriptEdit",
+                           isSchemaConfigInitialized: true,
+                           useHistoryState: false
+                       }
+                   });
+                },
 
                 initParameters: function() {
                     this.set("ActionCollection", this.Ext.create("Terrasoft.BaseViewModelCollection"));

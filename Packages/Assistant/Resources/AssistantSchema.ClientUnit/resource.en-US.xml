@@ -11,6 +11,7 @@
 			<Item Name="Images.9760594d-ed6b-4283-8ab5-2f38a0bcc5b4.Image" Type="Image" ContentType="Data" FileExtension=".svg" Value="PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAxOS4yLjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjxzdmcgdmVyc2lvbj0iMS4xIiBpZD0iTGF5ZXJfMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeD0iMHB4IiB5PSIwcHgiDQoJIHZpZXdCb3g9IjAgMCAzMiAzMiIgc3R5bGU9ImVuYWJsZS1iYWNrZ3JvdW5kOm5ldyAwIDAgMzIgMzI7IiB4bWw6c3BhY2U9InByZXNlcnZlIj4NCjxzdHlsZSB0eXBlPSJ0ZXh0L2NzcyI+DQoJLnN0MHtmaWxsOm5vbmU7c3Ryb2tlOiM3QzkxQUU7c3Ryb2tlLW1pdGVybGltaXQ6MTA7fQ0KPC9zdHlsZT4NCjxsaW5lIGNsYXNzPSJzdDAiIHgxPSIxNi41IiB5MT0iMTAiIHgyPSIxNi41IiB5Mj0iMjEiLz4NCjxsaW5lIGNsYXNzPSJzdDAiIHgxPSIxMSIgeTE9IjE1LjUiIHgyPSIyMiIgeTI9IjE1LjUiLz4NCjwvc3ZnPg0K" />
 			<Item Name="LocalizableStrings.AddDailyCaption.Value" Value="Add daily action" />
 			<Item Name="LocalizableStrings.RefreshCaption.Value" Value="Refresh" />
+			<Item Name="LocalizableStrings.ExecuteLuaScriptCaption.Value" Value="Run Lua script..." />
 		</Items>
 	</Group>
 </Resources>

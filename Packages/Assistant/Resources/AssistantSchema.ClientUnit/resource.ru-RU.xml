@@ -8,6 +8,7 @@
 			<Item Name="Images.9760594d-ed6b-4283-8ab5-2f38a0bcc5b4.Caption" Value="Изображение 1" />
 			<Item Name="LocalizableStrings.AddDailyCaption.Value" Value="Add daily action" />
 			<Item Name="LocalizableStrings.RefreshCaption.Value" Value="Обновить" />
+			<Item Name="LocalizableStrings.ExecuteLuaScriptCaption.Value" Value="Выполнить скрипт Lua..." />
 		</Items>
 	</Group>
 </Resources>
