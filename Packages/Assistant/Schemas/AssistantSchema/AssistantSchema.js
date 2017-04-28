@@ -193,7 +193,23 @@ define("AssistantSchema", ["RightUtilities", "ModalBox", "AssistantSchemaResourc
                     this.initializePageableOptions(esq, config);
                     this.set("IsDataLoaded", false);
                     esq.getEntityCollection(function(result) {
-                        this.onActionLoaded(result, clearCollection);
+                        this.getDataFromQRTZ(function (qData) {
+                            this.onActionLoaded(result, clearCollection, qData);
+                        }, this);
+                    }, this);
+                },
+
+                getDataFromQRTZ: function(callback, scope) {
+                    var config = {
+                        serviceName: "QuartzSchedulerProxyService",
+                        methodName: "GetJobInfo",
+                        scope: this,
+                        data: {}
+                    };
+                    this.callService(config, function(result) {
+                        if(callback) {
+                            callback.call(scope || this, result);
+                        }
                     }, this);
                 },
 
@@ -233,7 +249,7 @@ define("AssistantSchema", ["RightUtilities", "ModalBox", "AssistantSchemaResourc
                     this.loadData(true);
                 },
 
-                onLoadEntity: function(entity, viewModel) {
+                onLoadEntity: function(entity, viewModel, qData) {
                     viewModel = viewModel || this.getTaskViemModelInstance();
                     viewModel.setColumnValues(entity, {preventValidation: true});
                     viewModel.init();
@@ -241,13 +257,13 @@ define("AssistantSchema", ["RightUtilities", "ModalBox", "AssistantSchemaResourc
                     return viewModel;
                 },
 
-                onActionLoaded: function(result, clearCollection) {
+                onActionLoaded: function(result, clearCollection, qData) {
                     if (result.success) {
                         var dataCollection = result.collection;
                         this.set("CanLoadMoreData", dataCollection.getCount() > 0);
                         var data = this.Ext.create("Terrasoft.BaseViewModelCollection");
                         dataCollection.each(function(item) {
-                            var model = this.onLoadEntity(item);
+                            var model = this.onLoadEntity(item, null, qData);
                             data.add(item.get("Id"), model);
                         }, this);
                         var collection = this.get("ActionCollection");
