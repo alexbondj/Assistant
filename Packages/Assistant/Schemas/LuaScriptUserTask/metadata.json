@@ -141,6 +141,7 @@
           "L15": true
         }
       ],
+      "FK1": "return Terrasoft.Configuration.Lua.LuaScriptExecutor.Execute(Script, Owner);",
       "FK11": "dbee2029-ce8e-49f1-87c0-d9143f99846f",
       "FK12": "#839DC3"
     }
