@@ -34,7 +34,7 @@ namespace Terrasoft.Configuration.Assistant
 
 			public abstract void RunImmediate();
 
-			public abstract void RunOnEveryDay(DateTime dateTime);
+			public abstract BaseJobData RunOnEveryDay(DateTime dateTime);
 
 			public virtual bool Remove() {
 				return AppScheduler.RemoveJob(JobName, JobGroup);
@@ -46,6 +46,18 @@ namespace Terrasoft.Configuration.Assistant
 
 			public virtual void Resume() {
 				AppScheduler.Instance.ResumeJob(JobKey.Create(JobName, JobGroup));
+			}
+
+			public void AddTask(UserConnection userConnection, Guid actionId, DateTime dateTime) {
+				var insert = new Insert(userConnection)
+					.Into("AssistantTask")
+					.Set("Name", Column.Parameter(JobName))
+					.Set("ActionId", Column.Parameter(actionId))
+					.Set("SysAdminUnitId", Column.Parameter(userConnection.CurrentUser.Id))
+					.Set("RunDateTime", Column.Parameter(dateTime))
+					.Set("TypeId", Column.Parameter("53A1127D-B0C3-435B-9268-938F6678FDC2")) as Insert;
+				insert.Execute();
+
 			}
 		}
 
@@ -72,7 +84,7 @@ namespace Terrasoft.Configuration.Assistant
 					WorkspaceName, UserName, Parameters);
 			}
 
-			public override void RunOnEveryDay(DateTime dateTime) {
+			public override BaseJobData RunOnEveryDay(DateTime dateTime) {
 				ITrigger trigger = TriggerBuilder.Create()
 					.WithDailyTimeIntervalSchedule(
 						interval => interval
@@ -83,7 +95,9 @@ namespace Terrasoft.Configuration.Assistant
 				var job = AppScheduler.CreateProcessJob(JobName, JobGroup, ProcessName,
 					WorkspaceName, UserName, Parameters);
 				AppScheduler.Instance.ScheduleJob(job, trigger);
+				return this;
 			}
+
 		}
 
 		#endregion
@@ -163,10 +177,23 @@ namespace Terrasoft.Configuration.Assistant
 		}
 
 		private BaseJobData GetActionData(Guid actionId) {
+			var select = new Select(UserConnection)
+				.Column("ProcessName")
+				.From("AssistantAction")
+				.Where("Id")
+				.IsEqual(Column.Parameter(actionId)) as Select;
+			var processName = string.Empty;
+			using (DBExecutor dbExecutor = UserConnection.EnsureDBConnection()) {
+				using (IDataReader reader = dbExecutor.ExecuteReader(select.GetSqlText(), select.Parameters)) {
+					while (reader.Read()) {
+						processName = reader.GetColumnValue<string>("ProcessName");
+					}
+				}
+			}
 			var jobData = new ProcessJobData(UserConnection) {
-				ProcessName = "TestProcess",
-				JobName = "TestProcessJobName",
-				JobGroup = "TestProcessGroupName"
+				ProcessName = processName,
+				JobName = processName + "JobName_" + Guid.NewGuid(),
+				JobGroup = processName + "GroupName"
 			};
 			return jobData;
 		}
@@ -226,7 +253,7 @@ namespace Terrasoft.Configuration.Assistant
 
 		public bool RunOnEveryDay(Guid actionId, DateTime dateTime) {
 			try {
-				GetActionData(actionId).RunOnEveryDay(dateTime);
+				GetActionData(actionId).RunOnEveryDay(dateTime).AddTask(UserConnection, actionId, dateTime);
 			} catch {
 				return false;
 			}

@@ -21,7 +21,7 @@ define("AssistantModule", ["BaseSchemaModuleV2"], function() {
          * @protected
          * @overridden
          */
-        initHistoryState: Ext.emptyFn,
+        initHistoryState: Ext.emptyFn
 
 
     });

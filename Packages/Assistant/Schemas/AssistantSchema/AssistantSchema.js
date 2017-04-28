@@ -11,12 +11,38 @@ define("AssistantSchema", ["AssistantSchemaResources"],
                 },
                 "ActionTabActionsMenuCollection": {
                     "dataValueType": this.Terrasoft.DataValueType.COLLECTION
+                },
+                "AddItemMenuCollection": {
+                    "dataValueType": this.Terrasoft.DataValueType.COLLECTION
+                },
+                "ItemViewConfig": {
+                    dataValueType: this.Terrasoft.DataValueType.CUSTOM_OBJECT
+                },
+                "SchemaGeneratorConfig": {
+                    dataValueType: this.Terrasoft.DataValueType.CUSTOM_OBJECT
+                },
+                Action: {
+                    dataValueType: Terrasoft.DataValueType.LOOKUP,
+                    type: Terrasoft.ViewModelColumnType.VIRTUAL_COLUMN
+                },
+                actionList: {
+                    "dataValueType": this.Terrasoft.DataValueType.COLLECTION,
+                    value: new Terrasoft.Collection()
+                },
+                runTime: {
+                    type: Terrasoft.ViewModelColumnType.VIRTUAL_COLUMN,
+                    dataValueType: Terrasoft.DataValueType.DATE
+                },
+                IsDailyVisible: {
+                    type: Terrasoft.ViewModelColumnType.VIRTUAL_COLUMN,
+                    dataValueType: Terrasoft.DataValueType.BOOLEAN,
+                    value: false
                 }
             },
             methods: {
 
                 onGetItemConfig: function(itemConfig) {
-                    var viewConfig = this.Terrasoft.deepClone(this.get("EmailViewConfig"));
+                    var viewConfig = this.Terrasoft.deepClone(this.get("ItemViewConfig"));
                     itemConfig.config = viewConfig;
                 },
 
@@ -28,12 +54,53 @@ define("AssistantSchema", ["AssistantSchemaResources"],
                     this.callParent([function() {
                         Terrasoft.chain(
                             this.initActionTabActionsMenuCollection,
-                            //this.initEmailProcessTag,
+                            this.initAddItemMenuCollection,
+                            this.buildSchema,
                             function() {
                                 this.loadData();
                                 callback();
                             }, this);
                     }, this]);
+                },
+
+                showAddDaily: function() {
+                    this.set("IsDailyVisible", true);
+                },
+
+                addDailyAction: function(actionId, dateTime) {
+                    var config = {
+                        serviceName: "QuartzSchedulerProxyService",
+                        methodName: "RunOnEveryDayAction",
+                        scope: this,
+                        data: {
+                            "actionId": actionId,
+                            "dateTime": dateTime
+                        }
+                    };
+                    this.set("IsDailyVisible", false);
+                    this.callService(config, this.onRefreshData, this);
+                },
+
+                addDaily: function() {
+                    var action = this.get("Action").value;
+                    var dateTime = this.get("runTime");
+                    dateTime = "/Date(" + dateTime.toJSON() + ")\/";
+                    this.addDailyAction(action, dateTime);
+                },
+
+                initAddItemMenuCollection: function(callback, scope) {
+                    var collection = this.get("AddItemMenuCollection") ||
+                        this.Ext.create("Terrasoft.BaseViewModelCollection");
+                    var addDailyCaption = this.get("Resources.Strings.AddDailyCaption");
+                    var addDailyItem = this.getButtonMenuItem({
+                        "Caption": addDailyCaption,
+                        "Click": {bindTo: "showAddDaily"}
+                    });
+                    collection.addItem(addDailyItem);
+                    this.set("AddItemMenuCollection", collection);
+                    if (!this.Ext.isEmpty(callback)) {
+                        callback.call(scope || this);
+                    }
                 },
 
                 initActionTabActionsMenuCollection: function(callback, scope) {
@@ -82,6 +149,10 @@ define("AssistantSchema", ["AssistantSchemaResources"],
 
                 initParameters: function() {
                     this.set("ActionCollection", this.Ext.create("Terrasoft.BaseViewModelCollection"));
+                    this.set("SchemaGeneratorConfig", {
+                        schemaName: "JobItemSchema",
+                        profileKey: "JobItemSchema"
+                    });
                 },
 
                 /**
@@ -90,40 +161,181 @@ define("AssistantSchema", ["AssistantSchemaResources"],
                  * @param {Boolean} clearCollection Clear existing emails list flag.
                  */
                 loadData: function(clearCollection) {
+                    var esq = this.Ext.create("Terrasoft.EntitySchemaQuery", {
+                        rootSchemaName: "AssistantTask"
+                    });
+                    this.addEsqColumns(esq);
+                    this.addFilters(esq);
+                    var rowCount = this.get("RowCount");
                     var config = {
-                        serviceName: "QuartzSchedulerProxyService",
-                        methodName: "GetJobInfo",
-                        scope: this,
-                        data: {}
+                        collection: this.get("ActionCollection"),
+                        primaryColumnName: "Id",
+                        schemaQueryColumns: esq.columns,
+                        isPageable: true,
+                        rowCount: rowCount,
+                        isClearGridData: clearCollection
                     };
-                    this.callService(config, this.onActionLoaded, this);
+                    this.initializePageableOptions(esq, config);
+                    this.set("IsDataLoaded", false);
+                    esq.getEntityCollection(function(result) {
+                        this.onActionLoaded(result, clearCollection);
+                    }, this);
+                },
+
+                buildSchema: function(callback, scope) {
+                    var schemaBuilder = this.Ext.create("Terrasoft.SchemaBuilder");
+                    var generatorConfig = this.Terrasoft.deepClone(this.get("SchemaGeneratorConfig"));
+                    schemaBuilder.build(generatorConfig, function(viewModelClass, viewConfig) {
+                        this.set("ViewModelClass", viewModelClass);
+                        var view = {
+                            "id": "jobItemContainer",
+                            //"classes": {wrapClassName: ["email-container"]},
+                            "items": [{
+                                "className": "Terrasoft.Container",
+                                "items": viewConfig
+                            }]
+                        };
+                        this.set("ItemViewConfig", view);
+                        callback.call(scope);
+                    }, this);
+                },
+
+                addEsqColumns: function(esq) {
+                    esq.addColumn("Name", "JobName");
+                    esq.addColumn("Action.Name", "ActionName");
+                    esq.addColumn("Type.Name", "TypeName");
+                },
+
+                addFilters: function(esq) {
+                    var filters = this.Terrasoft.createFilterGroup();
+                    filters.add("isMine",
+                        esq.createColumnFilterWithParameter(Terrasoft.ComparisonType.EQUAL,
+                            "SysAdminUnit", Terrasoft.SysValue.CURRENT_USER.value));
+                    esq.filters = filters;
                 },
 
                 onRefreshData: function() {
-                    this.loadData();
+                    this.loadData(true);
                 },
 
-                onActionLoaded: function(result) {
+                onLoadEntity: function(entity, viewModel) {
+                    viewModel = viewModel || this.getTaskViemModelInstance();
+                    viewModel.setColumnValues(entity, {preventValidation: true});
+                    viewModel.init();
+                    //this.subscribeModelEvents(viewModel);
+                    return viewModel;
+                },
+
+                onActionLoaded: function(result, clearCollection) {
                     if (result.success) {
                         var dataCollection = result.collection;
-                        //this.set("CanLoadMoreData", dataCollection.getCount() > 0);
+                        this.set("CanLoadMoreData", dataCollection.getCount() > 0);
                         var data = this.Ext.create("Terrasoft.BaseViewModelCollection");
                         dataCollection.each(function(item) {
-                            //var model = this.onLoadEntity(item);
+                            var model = this.onLoadEntity(item);
                             data.add(item.get("Id"), model);
                         }, this);
                         var collection = this.get("ActionCollection");
-                        collection.clear();
+                        if (clearCollection) {
+                            collection.clear();
+                        }
                         collection.loadAll(data);
                     }
                     this.hideBodyMask();
                     this.set("IsDataLoaded", true);
                 },
 
+                getTaskViemModelInstance: function() {
+                    var viewModelClass = this.getViewModelClass();
+                    var viewModel = this.Ext.create(viewModelClass, {
+                        Ext: this.Ext,
+                        sandbox: this.sandbox,
+                        Terrasoft: this.Terrasoft,
+                        values: {}
+                    });
+                    return viewModel;
+                },
+
+                getViewModelClass: function() {
+                    var viewModelClass = this.get("ViewModelClass");
+                    return this.Terrasoft.deepClone(viewModelClass);
+                },
+
                 /**
                  * Schema destroying event handler.
                  */
                 onDestroyed: function() {
+                },
+
+                getEmptyMessageConfig: function(config) {
+                    config.className = "Terrasoft.Label";
+                    config.caption = "No active tasks"//this.get("Resources.Strings.NoEmailsInFolder");
+                    config.classes = {
+                        "labelClass": ["email-empty-message"]
+                    };
+                },
+
+                initializePageableOptions: function(select, config) {
+                    var isPageable = config.isPageable;
+                    select.isPageable = isPageable;
+                    var rowCount = config.rowCount;
+                    select.rowCount = isPageable ? rowCount : -1;
+                    if (!isPageable) {
+                        return;
+                    }
+                    var collection = config.collection;
+                    var primaryColumnName = config.primaryColumnName;
+                    var schemaQueryColumns = config.schemaQueryColumns;
+                    var isClearGridData = config.isClearGridData;
+                    var conditionalValues = null;
+                    var loadedRecordsCount = collection.getCount();
+                    if (Terrasoft.useOffsetFetchPaging) {
+                        select.rowsOffset = isClearGridData ? 0 : loadedRecordsCount;
+                    } else {
+                        var isNextPageLoading = (loadedRecordsCount > 0 && !isClearGridData);
+                        if (isNextPageLoading) {
+                            var lastRecord = config.lastRecord ||
+                                collection.getByIndex(loadedRecordsCount - 1);
+                            var columnDataValueType = this.getDataValueType(lastRecord, primaryColumnName);
+                            conditionalValues = this.Ext.create("Terrasoft.ColumnValues");
+                            conditionalValues.setParameterValue(primaryColumnName,
+                                lastRecord.get(primaryColumnName), columnDataValueType);
+                            schemaQueryColumns.eachKey(function(columnName, column) {
+                                var value = lastRecord.get(columnName);
+                                var dataValueType = this.getDataValueType(lastRecord, columnName);
+                                if (column.orderDirection !== Terrasoft.OrderDirection.NONE) {
+                                    if (dataValueType === Terrasoft.DataValueType.LOOKUP) {
+                                        value = value ? value.displayValue : null;
+                                        dataValueType = Terrasoft.DataValueType.TEXT;
+                                    }
+                                    conditionalValues.setParameterValue(columnName, value, dataValueType);
+                                }
+                            }, this);
+                        }
+                        select.conditionalValues = conditionalValues;
+                    }
+                },
+
+                prepareActionList: function(filter, list) {
+                    var esq = this.Ext.create("Terrasoft.EntitySchemaQuery", {
+                        rootSchemaName: "AssistantAction"
+                    });
+                    esq.addColumn("Id");
+                    esq.addColumn("Name");
+                    esq.getEntityCollection(function(result) {
+                        var collection = result.collection;
+                        var obj = {};
+                        collection.each(function(item) {
+                            obj[item.get("Id")] = {value: item.get("Id"), displayValue: item.get("Name")};
+                        });
+                        if (!list) {
+                            return;
+                        }
+                        list.clear();
+                        list.loadAll(obj);
+                    }, this);
+
+
                 }
             },
             diff: [
@@ -134,7 +346,7 @@ define("AssistantSchema", ["AssistantSchemaResources"],
                         "id": "AssistantMainContainer",
                         "selectors": {"wrapEl": "#AssistantMainContainer"},
                         "itemType": Terrasoft.ViewItemType.CONTAINER,
-                        "wrapClass": ["assistantMainContainer"],
+                        "wrapClass": ["task-main-container"],
                         "items": []
                     }
                 },
@@ -145,32 +357,32 @@ define("AssistantSchema", ["AssistantSchemaResources"],
                     "parentName": "AssistantMainContainer",
                     "values": {
                         "itemType": Terrasoft.ViewItemType.CONTAINER,
-                       // "classes": {"wrapClassName": ["emails-header-container"]},
+                        "classes": {"wrapClassName": ["task-header-container"]},
                         "items": []
                     }
                 },
-                {
-                    "operation": "insert",
-                    "parentName": "AssistantTabHeader",
-                    "propertyName": "items",
-                    "name": "AssistantButton",
-                    "values": {
-                        "itemType": Terrasoft.ViewItemType.BUTTON,
-                        "caption": "Add Action",
-                        //"caption": {
-                        //    "bindTo": "getMailTypeCaption"
-                        //},
-                        "style": Terrasoft.controls.ButtonEnums.style.TRANSPARENT,
-                        //"classes": {
-                        //    "wrapperClass": ["email-type-button-wrapper", "left-button"],
-                        //    "menuClass": ["email-type-button-menu"]
-                        //},
-                        "menu": {
-                            "items": {"bindTo": "getAssistantMenuItems"}
-                        },
-                        "markerValue": "AssistantButton"
-                    }
-                },
+                //{
+                //    "operation": "insert",
+                //    "parentName": "AssistantTabHeader",
+                //    "propertyName": "items",
+                //    "name": "AssistantButton",
+                //    "values": {
+                //        "itemType": Terrasoft.ViewItemType.BUTTON,
+                //        "caption": "Add Action",
+                //        //"caption": {
+                //        //    "bindTo": "getMailTypeCaption"
+                //        //},
+                //        "style": Terrasoft.controls.ButtonEnums.style.TRANSPARENT,
+                //        //"classes": {
+                //        //    "wrapperClass": ["email-type-button-wrapper", "left-button"],
+                //        //    "menuClass": ["email-type-button-menu"]
+                //        //},
+                //        "menu": {
+                //            "items": {"bindTo": "getAssistantMenuItems"}
+                //        },
+                //        "markerValue": "AssistantButton"
+                //    }
+                //},
                 {
                     "operation": "insert",
                     "name": "AddAction",
@@ -180,8 +392,15 @@ define("AssistantSchema", ["AssistantSchemaResources"],
                         "itemType": Terrasoft.ViewItemType.BUTTON,
                         "imageConfig": {"bindTo": "Resources.Images.AddActionImage"},
                         "style": Terrasoft.controls.ButtonEnums.style.TRANSPARENT,
-                        "click": {"bindTo": "addActon"}//,
-                        //"classes": {wrapClassName: ["add-email-button-wrap"]}
+                        "classes": {
+                            wrapperClass: ["add-task-button-wrap"],
+                            menuClass: ["task-actions-button-menu"]
+                        },
+                        "controlConfig": {
+                            "menu": {
+                                "items": {"bindTo": "AddItemMenuCollection"}
+                            }
+                        }
                     }
                 },
                 {
@@ -193,22 +412,77 @@ define("AssistantSchema", ["AssistantSchemaResources"],
                         "itemType": Terrasoft.ViewItemType.BUTTON,
                         "imageConfig": {"bindTo": "Resources.Images.ActionsButtonImage"},
                         "style": Terrasoft.controls.ButtonEnums.style.TRANSPARENT,
-                        //"classes": {
-                        //    //wrapperClass: ["email-actions-button-wrapper", "email-tab-actions-button-wrapper"],
-                        //    //menuClass: ["email-actions-button-menu"]
-                        //},
+                        "classes": {
+                            wrapperClass: ["task-actions-button-wrapper", "task-tab-actions-button-wrapper"],
+                            menuClass: ["task-actions-button-menu"]
+                        },
                         "controlConfig": {
                             "menu": {
                                 "items": {"bindTo": "ActionTabActionsMenuCollection"}
                             }
                         },
-                        //"visible": {"bindTo": "IsEmailTabActionsVisible"},
-                        "click": {"bindTo": "onActionsClick"},
-                        "markerValue": "EmailTabActions",
                         "tips": []
                     }
-                }
-                ,
+                },
+                {
+                    "operation": "insert",
+                    "name": "AddDailyContainer",
+                    "propertyName": "items",
+                    "parentName": "AssistantTabHeader",
+                    "values": {
+                        "itemType": Terrasoft.ViewItemType.CONTAINER,
+                        "visible": {"bindTo": "IsDailyVisible"},
+                        "items": []
+                    }
+                },
+                {
+                    "operation": "insert",
+                    "name": "ActionCombo",
+                    "parentName": "AddDailyContainer",
+                    "propertyName": "items",
+                    "values": {
+                        "dataValueType": Terrasoft.DataValueType.ENUM,
+                        "bindTo": "Action",
+                        "labelConfig": {
+                            "caption": {
+                                "bindTo": "Resources.Strings.StyleCaption"
+                            }
+                        },
+                        "controlConfig": {
+                            "className": "Terrasoft.ComboBoxEdit",
+                            "prepareList": {
+                                "bindTo": "prepareActionList"
+                            },
+                            "list": {
+                                "bindTo": "actionList"
+                            }
+                        }
+                    }
+                },
+                {
+                    "operation": "insert",
+                    "name": "RunTime",
+                    "parentName": "AddDailyContainer",
+                    "propertyName": "items",
+                    "values": {
+                        "bindTo": "runTime",
+                        "controlConfig": {
+                            "className": "Terrasoft.TimeEdit"
+                        }
+                    }
+                },
+                {
+                    "operation": "insert",
+                    "parentName": "AddDailyContainer",
+                    "propertyName": "items",
+                    "name": "AddDaily",
+                    "values": {
+                        "itemType": Terrasoft.ViewItemType.BUTTON,
+                        "caption": "Add Action",
+                        "style": Terrasoft.controls.ButtonEnums.style.TRANSPARENT,
+                        "click": {"bindTo": "addDaily"}
+                    }
+                },
                 //{
                 //    "operation": "insert",
                 //    "parentName": "EmailTabActions",
@@ -234,52 +508,16 @@ define("AssistantSchema", ["AssistantSchemaResources"],
                         "itemType": Terrasoft.ViewItemType.CONTAINER,
                         "generator": "ContainerListGenerator.generateGrid",
                         "collection": {"bindTo": "ActionCollection"},
-                        //"classes": {"wrapClassName": ["emails-container-list"]},
+                        "classes": {"wrapClassName": ["task-container-list"]},
                         "onGetItemConfig": {"bindTo": "onGetItemConfig"},
                         "idProperty": "Id",
                         "observableRowNumber": 1,
                         "observableRowVisible": {"bindTo": "onLoadNext"},
-                        //"rowCssSelector": ".email-container.selectable",
+                        "rowCssSelector": ".task-container.selectable",
                         "getEmptyMessageConfig": {bindTo: "getEmptyMessageConfig"},
                         "items": []
                     }
                 }
-                //,
-                //{
-                //    "operation": "insert",
-                //    "name": "NewButtonContainer",
-                //    "propertyName": "items",
-                //    "parentName": "EmailTabHeader",
-                //    "values": {
-                //        "itemType": Terrasoft.ViewItemType.CONTAINER,
-                //        "classes": {"wrapClassName": ["email-reload-panel-button-wrapper"]},
-                //        "visible": {
-                //            "bindTo": "NewEmailsCounter",
-                //            "bindConfig": {"converter": "getNewEmailsButtonVisible"}
-                //        },
-                //        "items": []
-                //    }
-                //},
-                //{
-                //    "operation": "insert",
-                //    "name": "NewEmailsButton",
-                //    "parentName": "NewEmailsButtonContainer",
-                //    "propertyName": "items",
-                //    "values": {
-                //        "itemType": Terrasoft.ViewItemType.BUTTON,
-                //        "imageConfig": {"bindTo": "Resources.Images.More"},
-                //        "caption": {
-                //            "bindTo": "NewEmailsCounter",
-                //            "bindConfig": {"converter": "getNewEmailsButtonCaption"}
-                //        },
-                //        "style": Terrasoft.controls.ButtonEnums.style.TRANSPARENT,
-                //        "click": {"bindTo": "reloadEmails"},
-                //        "markerValue": "LoadNewEmails",
-                //        "tips": []
-                //    }
-                //
-                //}
-
             ]
         };
     }

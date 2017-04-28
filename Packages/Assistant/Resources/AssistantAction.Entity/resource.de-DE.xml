@@ -2,7 +2,9 @@
 <Resources Culture="de-DE">
 	<Group Type="String">
 		<Items>
+			<Item Name="Columns.Active.Caption" Value="Column 1" />
 			<Item Name="Columns.Name.Caption" Value="Column 1" />
+			<Item Name="Columns.ProcessName.Caption" Value="Column 1" />
 		</Items>
 	</Group>
 </Resources>
